@@ -1,0 +1,63 @@
+---
+title: "Customer Churn Prediction"
+author: "Jose Alberto"
+date: "05/06/2021"
+output: github_document:
+  html_preview:true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+
+#Customer Churn
+A churn is when a customer stops paying or subscribing to your products or  services.
+In other word, is the loss these customers.
+
+Customer churn is one of the most important business metrics.
+
+That’s because the cost of retaining an existing customer is significantly less than the cost of acquiring a new one.
+
+The latter is often referred to as Customer Acquisition Cost (CAC).
+
+Companies use it as a metric to track if a company has a viable business model that can keep profits generating while maintaining a low CAC.
+
+## Load R Packages 
+
+```{r}
+library(tidyverse)
+library(dplyr)#dplyr is a grammar of data manipulation
+library(lattice)
+library(survival)
+library(Formula)
+library(MLmetrics)
+library(kernlab)
+library(gridExtra)
+library(caTools)#For Logistic regression
+library(Amelia)#Amelia II is an R package for the multiple imputation of multivariate incomplete data
+library(Hmisc)#imputing missing values
+library(dlookr)#Tools for Data Diagnosis, Exploration, Transformation
+library(rcompanion)#Functions to Support Extension Education Program Evaluation
+library(PerformanceAnalytics)#Econometric Tools for Performance and Risk Analysis
+library(skimr)#Compact and Flexible Summaries of Data
+library(lubridate)#Make Dealing with Dates a Little Easier
+library(fpp)#Data for Forecasting
+library(caret)#Classification and Regression Training        
+library(caretEnsemble)#Ensembles of Caret Models
+library(e1071)#Misc Functions of the Department of Statistics
+library(plyr)#Tools for Splitting, Aplitting and Combining Data
+library(randomForest)#Random Forest for Classification 
+library(ROCR)
+```
+
+
+
+```{r pressure, echo=FALSE}
+training_dataset <- read.csv("datasets/ml_case_training_data.csv", encoding='UTF-8')
+history_dataset <- read.csv("../input/history-dataset/ml_case_training_hist_data.csv", encoding='UTF-8')
+churn_dataset <- read.csv("../input/churn-dataset-output/ml_case_training_output.csv", encoding='UTF-8')
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
