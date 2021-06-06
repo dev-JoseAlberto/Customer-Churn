@@ -54,10 +54,51 @@ library(ROCR)
 
 
 ```{r pressure, echo=FALSE}
-training_dataset <- read.csv("datasets/ml_case_training_data.csv", encoding='UTF-8')
-history_dataset <- read.csv("../input/history-dataset/ml_case_training_hist_data.csv", encoding='UTF-8')
-churn_dataset <- read.csv("../input/churn-dataset-output/ml_case_training_output.csv", encoding='UTF-8')
-
+training_dataset <- read.csv("datasets/ml_case_training_data.csv", encoding='UTF-8', header = TRUE)
+history_dataset <- read.csv("datasets/ml_case_training_hist_data.csv", encoding='UTF-8', header = TRUE)
+churn_dataset <- read.csv("datasets/ml_case_training_output.csv", encoding='UTF-8', header=TRUE)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+```{r}
+training_dataset2 <- data.frame(training_dataset)
+history_dataset2 <- data.frame(history_dataset)
+```
+
+
+
+
+```{r}
+str(training_dataset2)
+```
+
+
+```{r}
+str(history_dataset2)
+```
+
+
+```{r}
+str(churn_dataset)
+```
+
+
+
+
+# Using sapply on columns with missing values:
+```{r}
+sapply(training_dataset2, function(x) sum(is.na(x)))
+```
+
+###Plot a missinggness map showing where occurs in the dataset:
+
+```{r}
+missmap(training_dataset2, 
+        legend=TRUE,
+        col=c('#ff5c33', '#3399ff'),
+        y.cex = 0.5,
+        x.cex = 0.5
+)
+```
+
