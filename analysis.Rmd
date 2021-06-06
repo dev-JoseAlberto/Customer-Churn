@@ -3,11 +3,11 @@ title: "Customer Churn Prediction"
 author: "Jose Alberto"
 date: "05/06/2021"
 output: github_document:
-  html_preview:false
+  html_preview:true
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
 ```
 
 
