@@ -3,7 +3,7 @@ title: "Customer Churn Prediction"
 author: "Jose Alberto"
 date: "05/06/2021"
 output: github_document:
-  html_preview:true
+  html_preview:false
 ---
 
 ```{r setup, include=FALSE}
