@@ -387,3 +387,295 @@ ts.plot(ts_forecast_base_bill_year,
      ylab="Electricity Bill Baseline")
 ```
 
+```{r}
+seasonplot(ts1,col=rainbow(5))
+```
+```{r}
+ts_forecast_base_bill_year_decompose <- decompose(ts_forecast_base_bill_year, "multiplicative")
+```
+
+```{r}
+plot(ts_forecast_base_bill_year_decompose, col="#ff9900")
+```
+
+Feature engineering
+
+Decompose the date 
+
+Isolating components of the date
+
+```{r}
+training_dataset2["Year_activation_contract"] <- year(training_dataset2$date_activ)
+
+training_dataset2["Month_activation_contract"] <- month(training_dataset2$date_activ)
+
+training_dataset2["Day_Month_activation_contract"] <- day(training_dataset2$date_activ)
+```
+
+```{r}
+training_dataset2["Year_of_the_End_contract"] <- year(training_dataset2$date_end)
+
+training_dataset2["Month_of_the_End_contract"] <- month(training_dataset2$date_end)
+
+training_dataset2["Day_Month_of_the_End_contract"] <- day(training_dataset2$date_end)
+```
+
+```{r}
+training_dataset2["Year_of_first_contract"] <- year(training_dataset2$date_first_activ)
+
+training_dataset2["Month_of_first_contract"] <- month(training_dataset2$date_first_activ)
+
+training_dataset2["Day_Month_of_first_contract"] <- day(training_dataset2$date_first_activ)
+```
+
+```{r}
+training_dataset2["Year_of_last_modification"] <- year(training_dataset2$date_modif_prod)
+
+training_dataset2["Month_of_last_modification"] <- month(training_dataset2$date_modif_prod)
+
+training_dataset2["Day_Month_of_last_modification"] <- day(training_dataset2$date_modif_prod)
+```
+
+
+```{r}
+training_dataset2["Year_contract_renewal"] <- year(training_dataset2$date_renewal)
+
+training_dataset2["Month_contract_renewal"] <- month(training_dataset2$date_renewal)
+
+training_dataset2["Day_Month_contract_renewal"] <- day(training_dataset2$date_renewal)
+```
+
+```{r}
+history_dataset2["Price_Year"] <- year(history_dataset2$price_date)
+
+history_dataset2["Price_Month"] <- month(history_dataset2$price_date)
+
+history_dataset2["Price_Day_Month"] <- day(history_dataset2$price_date)
+```
+
+Merge data frames
+
+```{r}
+dataset_merge <- merge(training_dataset2, history_dataset2, all=TRUE)
+```
+
+
+```{r}
+dataset2_merge <- merge(dataset_merge, churn_dataset, all=TRUE)
+```
+
+```{r}
+dataset3_merge <- dataset2_merge %>% 
+        select(-one_of("id","activity_new","campaign_disc_ele",
+                     "channel_sales","date_activ","date_end","date_first_activ",
+                     "date_modif_prod","date_renewal","price_date","origin_up"))
+```
+
+
+
+```{r}
+dim(dataset3_merge)
+```
+
+Removing rows with missing values:
+
+```{r}
+dataset3_merge <- na.omit(dataset3_merge)
+```
+
+
+Modeling & Evaluation
+Customer Churn Prediction Model Binary Classification with Random Forest
+
+```{r}
+dataset3_merge$churn <- factor(dataset3_merge$churn, levels = c(1, 0), labels = c("Yes","No"))
+table(dataset3_merge$churn)
+```
+
+```{r}
+barplot(table(dataset3_merge$churn),  col = c('#0033cc','#ff0000'), main="Imbalanced Classes")
+```
+
+
+Partitioning the DataSet in Train and Test Set:
+
+```{r}
+partitionDataset <- createDataPartition(dataset3_merge$churn, 
+                                        p=0.7, 
+                                        list = FALSE)
+```
+
+
+```{r}
+train_dataset <- dataset3_merge[partitionDataset,]
+```
+
+
+```{r}
+train_dataset_balanced <- upSample(x = train_dataset [, -ncol(train_dataset)], y = train_dataset$churn)
+```
+ 
+```{r}
+barplot(table(train_dataset_balanced$Class),  col = c('#0033cc','#ff0000'), main="Balanced Classes")
+```
+
+```{r}
+test_dataset <- dataset3_merge[-partitionDataset,]
+```
+
+
+```{r}
+test_dataset_balanced <- upSample(x = test_dataset[, -ncol(test_dataset)], 
+                                    y = test_dataset$churn)
+```
+
+
+```{r}
+model_rf <-  train(Class~cons_12m + 
+                        cons_gas_12m+cons_last_month+
+                        forecast_base_bill_ele+forecast_cons+
+                        forecast_cons_12m+forecast_meter_rent_12m+
+                        forecast_price_energy_p2+margin_gross_pow_ele+
+                        net_margin+ pow_max+Year_of_first_contract+
+                        Month_of_first_contract+Year_of_last_modification+
+                        Day_Month_of_the_End_contract+
+                        Day_Month_activation_contract+ 
+                        Day_Month_of_first_contract+                      
+                        Day_Month_contract_renewal,
+                        method="rf",
+                        data= train_dataset_balanced)
+```
+
+
+Random Forest is One of Several Different Classifiers That Provides Metric Variable Importance :
+
+```{r}
+varimp_model_rf <- varImp(model_rf, scale=FALSE)
+```
+
+
+```{r}
+print(varimp_model_rf)
+```
+
+
+
+Customers to Churn Predictive Model Variables Importance Computes the Random Forest:
+
+```{r}
+plot1 <- plot(varimp_model_rf ,top=18, scales=list(y=list(cex=.95)), 
+     main="Importance Computes the Random Forest")
+```
+
+
+```{r}
+fit <- predict(model_rf,test_dataset_balanced)
+```
+
+
+```{r}
+confusionMatrix(reference=test_dataset_balanced$Class, data=fit, mode="everything", positive="Yes")v
+```
+
+
+```{r}
+treinoControle <-  trainControl(
+        method = 'repeatedcv',
+        number = 10,
+        repeats = 2,
+        search ='grid',
+        savePredictions = 'final',
+        summaryFunction = twoClassSummary,
+        classProbs = TRUE)
+```
+
+
+
+
+```{r}
+set.seed(123)
+model2_rf <- train(Class~ margin_gross_pow_ele+cons_12m+
+                  net_margin+forecast_cons_12m+
+                 cons_last_month+
+                  pow_max+Day_Month_activation_contract+
+                  Day_Month_contract_renewal+
+                  forecast_price_energy_p2+Year_of_last_modification+
+                  cons_gas_12m+Year_of_first_contract+cons_gas_12m+
+                  Month_of_first_contract+Day_Month_of_first_contract,
+                  method ='rf',
+                  tuneLength = 10,
+                  trControl = treinoControle,
+                  metric = 'ROC',
+                  data = train_dataset_balanced)
+```
+
+
+
+```{r}
+predict1 <- predict(model2_rf, newdata= test_dataset_balanced)
+```
+
+
+```{r}
+confusionMatrix(reference =test_dataset_balanced$Class, data = predict1 , mode='everything', positive="Yes")
+```
+
+
+```{r}
+fitProb <- predict(model2_rf, test_dataset_balanced, type='prob')
+```
+
+
+```{r}
+alteredProb <- fitProb$`No`
+
+```
+
+
+```{r}
+alteredProb <- factor(ifelse(alteredProb > 0.5, 'No','Yes'))
+```
+
+
+```{r}
+confusionMatrix(reference= factor(test_dataset_balanced$Class, levels=c('No','Yes')), data=alteredProb, mode='everything', positive='Yes')
+```
+
+```{r}
+predictions <- fitProb$Yes
+```
+
+```{r}
+labels <- test_dataset_balanced$Class
+```
+
+```{r}
+pred <- prediction(predictions, labels)
+pred
+```
+
+```{r}
+performance1 <- performance(pred,'tpr','fpr')
+```
+
+Receiver Operating Characteristic Curve: 
+
+An ROC curve is a graph showing the performance of a classification model at all classification thresholds. 
+This curve plots two parameters:
+
+True Positive Rate
+False Positive Rate
+True Positive Rate (TPR) is a synonym for recall and is therefore defined as follows: TPR = TP/TP+FN
+
+False Positive Rate (FPR) is defined as follows: FPR = FP/FP+TN
+
+TP vs. FP rate at different classification thresholds.
+
+An ROC curve plots TPR vs. FPR at different classification thresholds. 
+Lowering the classification threshold classifies more items as positive, thus increasing both False Positives and True Positives. 
+The following figure shows a ROC curve:
+
+
+```{r}
+plot(performance1, avg='threshold', colorize=TRUE)
+```
